@@ -2,15 +2,8 @@
 
 <div align="center">
 
-[![Cortensor Hackathon #2](https://img.shields.io/badge/Cortensor-Hackathon%20%232-purple?style=for-the-badge&logo=ethereum)](https://cortensor.com)
-[![Rust](https://img.shields.io/badge/Rust-1.70+-orange?style=for-the-badge&logo=rust)](https://rustlang.org)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=for-the-badge&logo=typescript)](https://typescriptlang.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **🔥 "A self-orchestrating hive of AI agents that discover, verify, and execute public goods—powered by Cortensor's decentralized intelligence."**
-
-[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🎬 Demo](#-demo) • [🏗️ Architecture](#️-architecture) • [🤝 Contributing](#-contributing)
 
 </div>
 
@@ -19,27 +12,27 @@
 ## 🎯 The Problem
 
 Current public goods funding and execution faces critical challenges:
+ding and execution faces critical challenges:
 
-```mermaid
-graph TD
-    A[Public Goods Challenges] --> B[Discovery Gap]
-    A --> C[Verification Bottleneck]
-    A --> D[Execution Delays]
-    A --> E[Coordination Failures]
-    
-    B --> B1[Hidden opportunities in GitHub/research]
-    B --> B2[No systematic discovery mechanism]
-    
-    C --> C1[Manual verification processes]
-    C --> C2[Single points of failure]
-    C --> C3[Subjective assessment bias]
-    
-    D --> D1[Bureaucratic approval chains]
-    D --> D2[Slow fund disbursement]
-    D --> D3[Manual contract deployment]
-    
-    E --> E1[Fragmented stakeholder communication]
-    E --> E2[Misaligned incentives]
+### 🔍 Discovery Gap
+- Hidden opportunities in GitHub/research repositories
+- No systematic discovery mechanism for emerging needs
+- Manual scanning leads to missed opportunities
+
+### ⚠️ Verification Bottleneck  
+- Manual verification processes create delays
+- Single points of failure in assessment
+- Subjective assessment bias affects decisions
+
+### ⏱️ Execution Delays
+- Bureaucratic approval chains slow progress
+- Slow fund disbursement processes
+- Manual contract deployment inefficiencies
+
+### 🔄 Coordination Failures
+- Fragmented stakeholder communication
+- Misaligned incentives between parties
+- Lack of transparent consensus mecha
     E --> E3[Lack of transparent consensus]
     
     style A fill:#ff6b6b
@@ -55,26 +48,26 @@ Aether Swarm revolutionizes public goods through **autonomous agent collectives*
 
 ```mermaid
 graph TD
-    A[Aether Swarm Solution] --> B[Autonomous Discovery]
-    A --> C[Decentralized Verification]
-    A --> D[Instant Execution]
-    A --> E[Swarm Consensus]
+    A["Aether Swarm Solution"] --> B["Autonomous Discovery"]
+    A --> C["Decentralized Verification"]
+    A --> D["Instant Execution"]
+    A --> E["Swarm Consensus"]
     
-    B --> B1[AI agents scan GitHub/news 24/7]
-    B --> B2[Multi-source opportunity scoring]
-    B --> B3[Real-time impact assessment]
+    B --> B1["AI agents scan GitHub/news 24/7"]
+    B --> B2["Multi-source opportunity scoring"]
+    B --> B3["Real-time impact assessment"]
     
-    C --> C1[Multi-node PoI validation]
-    C --> C2[Cross-agent verification]
-    C --> C3[Cortensor consensus engine]
+    C --> C1["Multi-node PoI validation"]
+    C --> C2["Cross-agent verification"]
+    C --> C3["Cortensor consensus engine"]
     
-    D --> D1[Smart contract deployment]
-    D --> D2[Automated fund distribution]
-    D --> D3[Real-time execution tracking]
+    D --> D1["Smart contract deployment"]
+    D --> D2["Automated fund distribution"]
+    D --> D3["Real-time execution tracking"]
     
-    E --> E1[Stake-weighted voting]
-    E --> E2[70% consensus threshold]
-    E --> E3[Self-improving algorithms]
+    E --> E1["Stake-weighted voting"]
+    E --> E2["70% consensus threshold"]
+    E --> E3["Self-improving algorithms"]
     
     style A fill:#4caf50
     style B fill:#81c784
