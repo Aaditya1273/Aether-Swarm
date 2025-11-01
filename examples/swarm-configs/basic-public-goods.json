@@ -1,0 +1,31 @@
+{
+  "name": "basic-public-goods-swarm",
+  "agents": {
+    "count": 3,
+    "templates": ["scout", "verifier", "executor"],
+    "resources": {
+      "cpuLimit": "2",
+      "memoryLimit": "4GB",
+      "inferenceBudget": 10000
+    }
+  },
+  "consensus": {
+    "algorithm": "hybrid",
+    "threshold": 0.7,
+    "timeoutMs": 30000,
+    "stakeWeight": true
+  },
+  "publicGoods": {
+    "categories": ["depin", "climate", "education"],
+    "budget": 100000,
+    "impactMetrics": ["reach", "sustainability", "cost_effectiveness"],
+    "quadraticFunding": true
+  },
+  "cortensor": {
+    "apiEndpoint": "https://api.cortensor.com",
+    "modelPreferences": ["gpt-4", "claude-3"],
+    "inferenceTimeout": 30000,
+    "proofOfInference": true,
+    "stakePoolId": "pool_public_goods_001"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "scout-agent",
+  "type": "scout",
+  "description": "Discovers public goods opportunities across multiple sources",
+  "capabilities": [
+    "github_analysis",
+    "news_monitoring", 
+    "social_sentiment",
+    "impact_scoring"
+  ],
+  "specialization": {
+    "categories": ["depin", "climate", "education", "healthcare"],
+    "sources": [
+      "github.com",
+      "news.ycombinator.com",
+      "reddit.com/r/ethereum",
+      "twitter.com"
+    ],
+    "scoring_criteria": {
+      "impact_potential": 0.4,
+      "feasibility": 0.3,
+      "urgency": 0.2,
+      "community_support": 0.1
+    }
+  },
+  "resources": {
+    "inference_calls_per_hour": 100,
+    "memory_retention_days": 7,
+    "stake_per_discovery": 500
+  },
+  "behavior": {
+    "exploration_rate": 0.3,
+    "confidence_threshold": 0.6,
+    "collaboration_preference": 0.8
+  }
+}

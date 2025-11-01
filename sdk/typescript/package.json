@@ -1,0 +1,41 @@
+{
+  "name": "@aether-swarm/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Aether Swarm - Decentralized Agent Collective",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "aether-swarm",
+    "cortensor",
+    "agents",
+    "public-goods",
+    "decentralized",
+    "ai"
+  ],
+  "author": "Aether Swarm Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.14.0",
+    "axios": "^1.6.0",
+    "uuid": "^9.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ]
+}
