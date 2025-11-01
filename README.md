@@ -721,10 +721,5 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **🌀 Built with ❤️ for the Cortensor community and public goods ecosystem**
 
-[![GitHub Stars](https://img.shields.io/github/stars/username/aether-swarm?style=social)](https://github.com/username/aether-swarm)
-[![Twitter Follow](https://img.shields.io/twitter/follow/aetherswarm?style=social)](https://twitter.com/aetherswarm)
-[![Discord](https://img.shields.io/discord/123456789?style=social&logo=discord)](https://discord.gg/aetherswarm)
-
-[🚀 **Deploy Your First Swarm**](#-quick-start) • [📖 **Read the Docs**](#-documentation) • [🤝 **Join Community**](https://discord.gg/aetherswarm)
 
 </div>
