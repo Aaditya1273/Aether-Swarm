@@ -189,14 +189,21 @@ export function SwarmDashboard({ swarms }: SwarmDashboardProps) {
       {/* Agent Flow Visualization */}
       {selectedSwarm && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-purple-500/20">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">
-                Agent Communication Flow: {selectedSwarm.name}
-              </h3>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Agent Communication: {selectedSwarm.name}
+                </h3>
+              </div>
               <button
                 onClick={() => setSelectedSwarm(null)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
               >
                 ✕
               </button>
@@ -209,37 +216,48 @@ export function SwarmDashboard({ swarms }: SwarmDashboardProps) {
       )}
 
       {/* Recent Activity */}
-      <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-500/20">
-        <h3 className="text-xl font-bold text-white mb-6">
-          Recent Activity 
-          <span className="text-sm font-normal text-gray-400 ml-2">
-            ({recentActivity.length} live events)
-          </span>
-        </h3>
-        <div className="space-y-4">
+      <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+        <div className="flex items-center space-x-2 mb-6">
+          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Recent Activity 
+            <span className="text-sm font-normal text-gray-500 ml-2">
+              ({recentActivity.length} live events)
+            </span>
+          </h3>
+        </div>
+        <div className="space-y-3">
           {recentActivity.length > 0 ? (
             recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg">
+              <div key={activity.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100">
                 <div className="text-2xl">
                   {getActivityIcon(activity.type)}
                 </div>
                 <div className="flex-1">
-                  <p className="text-white font-medium">
+                  <p className="text-gray-900 font-medium">
                     {getActivityTitle(activity.type, activity.data)}
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-600">
                     {getActivityDescription(activity.type, activity.data)} • {getTimeAgo(activity.timestamp)}
                   </p>
                 </div>
-                <div className={`text-sm font-medium ${getActivityColor(activity.type)}`}>
+                <div className={`text-sm font-medium px-2 py-1 rounded-full ${getActivityBadgeColor(activity.type)}`}>
                   {getActivityStatus(activity.type)}
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-2">📡</div>
-              <p className="text-gray-400">Waiting for live activity...</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <p className="text-gray-600 font-medium">Waiting for live activity...</p>
               <p className="text-sm text-gray-500 mt-1">
                 {isConnected ? 'Connected and monitoring swarms' : 'Connecting to live feed...'}
               </p>
@@ -291,6 +309,17 @@ export function SwarmDashboard({ swarms }: SwarmDashboardProps) {
       case 'ProposalCreated': return 'text-yellow-400';
       case 'SwarmStopped': return 'text-red-400';
       default: return 'text-gray-400';
+    }
+  }
+
+  function getActivityBadgeColor(type: string): string {
+    switch (type) {
+      case 'AgentSpawned': return 'text-blue-700 bg-blue-100';
+      case 'TaskExecuted': return 'text-green-700 bg-green-100';
+      case 'ConsensusReached': return 'text-purple-700 bg-purple-100';
+      case 'ProposalCreated': return 'text-yellow-700 bg-yellow-100';
+      case 'SwarmStopped': return 'text-red-700 bg-red-100';
+      default: return 'text-gray-700 bg-gray-100';
     }
   }
 

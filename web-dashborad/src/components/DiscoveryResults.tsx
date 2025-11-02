@@ -38,14 +38,30 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
     ? discoveries 
     : discoveries.filter(d => d.category === selectedCategory);
 
+  const getIcon = (name: string) => {
+    const icons: { [key: string]: JSX.Element } = {
+      search: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ),
+      searchLarge: (
+        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      )
+    };
+    return icons[name] || icons.search;
+  };
+
   if (loading) {
     return (
-      <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-500/20">
+      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
         <div className="animate-pulse">
-          <div className="h-6 bg-slate-700 rounded w-1/3 mb-4"></div>
+          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 bg-slate-700 rounded"></div>
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -54,14 +70,19 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
   }
 
   return (
-    <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-500/20">
+    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-white">
-          🔍 Discovery Results
-          <span className="text-sm font-normal text-gray-400 ml-2">
-            ({filteredDiscoveries.length} found)
-          </span>
-        </h3>
+        <div className="flex items-center space-x-3">
+          <div className="text-blue-600">
+            {getIcon('search')}
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">
+            Discovery Results
+            <span className="text-sm font-normal text-gray-600 ml-2">
+              ({filteredDiscoveries.length} found)
+            </span>
+          </h3>
+        </div>
         
         {/* Category Filter */}
         <div className="flex space-x-2">
@@ -71,8 +92,8 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
               onClick={() => setSelectedCategory(category)}
               className={`px-3 py-1 rounded-full text-sm transition-all ${
                 selectedCategory === category
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               {category === 'all' ? 'All' : category.charAt(0).toUpperCase() + category.slice(1)}
@@ -83,8 +104,10 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
 
       {filteredDiscoveries.length === 0 ? (
         <div className="text-center py-8">
-          <div className="text-4xl mb-2">🔍</div>
-          <p className="text-gray-400">No discoveries found</p>
+          <div className="text-gray-400 mb-2 flex justify-center">
+            {getIcon('searchLarge')}
+          </div>
+          <p className="text-gray-600">No discoveries found</p>
           <p className="text-sm text-gray-500 mt-1">
             Run scout tasks to discover public goods opportunities
           </p>
@@ -92,12 +115,12 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
       ) : (
         <div className="space-y-4 max-h-96 overflow-y-auto">
           {filteredDiscoveries.map((discovery) => (
-            <div key={discovery.id} className="bg-slate-700/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
+            <div key={discovery.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-lg">{getSourceIcon(discovery.source)}</span>
-                    <span className="text-sm text-gray-400">{discovery.source}</span>
+                    <span className="text-sm text-gray-600">{discovery.source}</span>
                     <span className={`text-sm font-medium ${getCategoryColor(discovery.category)}`}>
                       {discovery.category}
                     </span>
@@ -106,12 +129,12 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
                     </span>
                   </div>
                   
-                  <h4 className="text-white font-medium mb-2 line-clamp-2">
+                  <h4 className="text-gray-900 font-medium mb-2 line-clamp-2">
                     {discovery.title}
                   </h4>
                   
                   {discovery.description && (
-                    <p className="text-gray-300 text-sm mb-3 line-clamp-2">
+                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
                       {discovery.description}
                     </p>
                   )}
@@ -119,16 +142,16 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
                   <div className="flex items-center space-x-4">
                     {discovery.impact_score && (
                       <div className="flex items-center space-x-1">
-                        <span className="text-xs text-gray-400">Impact:</span>
-                        <span className="text-sm font-medium text-yellow-400">
+                        <span className="text-xs text-gray-500">Impact:</span>
+                        <span className="text-sm font-medium text-orange-600">
                           {discovery.impact_score.toFixed(1)}/10
                         </span>
                       </div>
                     )}
                     
                     <div className="flex items-center space-x-1">
-                      <span className="text-xs text-gray-400">Confidence:</span>
-                      <span className="text-sm font-medium text-green-400">
+                      <span className="text-xs text-gray-500">Confidence:</span>
+                      <span className="text-sm font-medium text-green-600">
                         {(discovery.confidence * 100).toFixed(1)}%
                       </span>
                     </div>
@@ -138,7 +161,7 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
                         href={discovery.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                        className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
                       >
                         View Source →
                       </a>
@@ -156,12 +179,12 @@ export function DiscoveryResults({ swarmId, limit = 10 }: DiscoveryResultsProps)
               
               {/* Metadata */}
               {discovery.metadata && Object.keys(discovery.metadata).length > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-600/30">
+                <div className="mt-3 pt-3 border-t border-gray-200">
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(discovery.metadata).slice(0, 3).map(([key, value]) => (
-                      <span key={key} className="text-xs bg-slate-600/30 px-2 py-1 rounded">
-                        <span className="text-gray-400">{key}:</span>{' '}
-                        <span className="text-gray-300">{String(value)}</span>
+                      <span key={key} className="text-xs bg-gray-200 px-2 py-1 rounded">
+                        <span className="text-gray-600">{key}:</span>{' '}
+                        <span className="text-gray-800">{String(value)}</span>
                       </span>
                     ))}
                   </div>

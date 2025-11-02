@@ -87,33 +87,49 @@ export function AgentFlowChart({ swarmId }: AgentFlowChartProps) {
             className={`relative p-4 rounded-xl border-2 ${getAgentColor(agent.type, agent.status)} bg-white shadow-sm`}
           >
             {/* Agent Header */}
-            <div className="flex items-center space-x-2 mb-2">
-              <span className="text-2xl">{getAgentIcon(agent.type)}</span>
+            <div className="flex items-center space-x-3 mb-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                agent.type === 'scout' ? 'bg-blue-100' :
+                agent.type === 'verifier' ? 'bg-purple-100' : 'bg-green-100'
+              }`}>
+                <svg className={`w-5 h-5 ${
+                  agent.type === 'scout' ? 'text-blue-600' :
+                  agent.type === 'verifier' ? 'text-purple-600' : 'text-green-600'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {agent.type === 'scout' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />}
+                  {agent.type === 'verifier' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />}
+                  {agent.type === 'executor' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />}
+                </svg>
+              </div>
               <div>
-                <div className="text-sm font-medium text-white capitalize">
+                <div className="text-sm font-semibold text-gray-900 capitalize">
                   {agent.type}
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-gray-500">
                   {agent.id}
                 </div>
               </div>
             </div>
 
             {/* Status Indicator */}
-            <div className="flex items-center space-x-2 mb-2">
+            <div className="flex items-center space-x-2 mb-3">
               <div className={`w-2 h-2 rounded-full ${
-                agent.status === 'active' ? 'bg-green-400' :
-                agent.status === 'processing' ? 'bg-yellow-400 animate-pulse' :
+                agent.status === 'active' ? 'bg-green-500' :
+                agent.status === 'processing' ? 'bg-yellow-500 animate-pulse' :
                 'bg-gray-400'
               }`}></div>
-              <span className="text-xs text-gray-300 capitalize">{agent.status}</span>
+              <span className={`text-xs font-medium capitalize ${
+                agent.status === 'active' ? 'text-green-700' :
+                agent.status === 'processing' ? 'text-yellow-700' :
+                'text-gray-500'
+              }`}>{agent.status}</span>
             </div>
 
             {/* Current Task */}
             {agent.currentTask && (
-              <div className="mb-2">
-                <div className="text-xs text-gray-400 mb-1">Current Task:</div>
-                <div className="text-xs text-white truncate" title={agent.currentTask}>
+              <div className="mb-3">
+                <div className="text-xs text-gray-500 font-medium mb-1">Current Task:</div>
+                <div className="text-xs text-gray-700 truncate" title={agent.currentTask}>
                   {agent.currentTask}
                 </div>
               </div>
@@ -123,12 +139,12 @@ export function AgentFlowChart({ swarmId }: AgentFlowChartProps) {
             {agent.confidence && (
               <div className="mb-2">
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-gray-400">Confidence</span>
-                  <span className="text-green-400">{(agent.confidence * 100).toFixed(1)}%</span>
+                  <span className="text-gray-500 font-medium">Confidence</span>
+                  <span className="text-green-600 font-semibold">{(agent.confidence * 100).toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-slate-600 rounded-full h-1">
+                <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-gradient-to-r from-green-500 to-emerald-400 h-1 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${agent.confidence * 100}%` }}
                   ></div>
                 </div>
@@ -137,8 +153,8 @@ export function AgentFlowChart({ swarmId }: AgentFlowChartProps) {
 
             {/* Processing Animation */}
             {agent.status === 'processing' && (
-              <div className="absolute top-1 right-1">
-                <div className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute top-2 right-2">
+                <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
           </div>
@@ -146,20 +162,32 @@ export function AgentFlowChart({ swarmId }: AgentFlowChartProps) {
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-2 right-2 bg-slate-800/80 backdrop-blur-sm rounded-lg p-3 text-xs">
-        <div className="text-white font-medium mb-2">Agent Types</div>
-        <div className="space-y-1">
+      <div className="absolute bottom-3 right-3 bg-white border border-gray-200 rounded-lg p-3 text-xs shadow-sm">
+        <div className="text-gray-900 font-semibold mb-2">Agent Types</div>
+        <div className="space-y-2">
           <div className="flex items-center space-x-2">
-            <span className="text-lg">🕵️</span>
-            <span className="text-gray-300">Scout</span>
+            <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
+              <svg className="w-2.5 h-2.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <span className="text-gray-700">Scout</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-lg">🧠</span>
-            <span className="text-gray-300">Verifier</span>
+            <div className="w-4 h-4 bg-purple-100 rounded flex items-center justify-center">
+              <svg className="w-2.5 h-2.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span className="text-gray-700">Verifier</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-lg">⚙️</span>
-            <span className="text-gray-300">Executor</span>
+            <div className="w-4 h-4 bg-green-100 rounded flex items-center justify-center">
+              <svg className="w-2.5 h-2.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              </svg>
+            </div>
+            <span className="text-gray-700">Executor</span>
           </div>
         </div>
       </div>
