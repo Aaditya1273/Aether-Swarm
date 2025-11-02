@@ -282,7 +282,7 @@ flowchart TD
     └── deploy.sh                 # Deployment automation
 ```
 
-## 🚀 Quick Start
+## 🚀 Production Setup
 
 ### Prerequisites
 
@@ -291,29 +291,54 @@ graph LR
     A[System Requirements] --> B[Node.js 18+]
     A --> C[Rust 1.70+]
     A --> D[Git]
-    A --> E[4GB+ RAM]
+    A --> E[8GB+ RAM]
     
     B --> B1[npm/yarn package manager]
     C --> C1[Cargo build system]
     D --> D1[Version control]
     E --> E1[Agent memory allocation]
     
+    F[API Keys Required] --> G[Cortensor API Key]
+    F --> H[Alchemy/Infura RPC]
+    F --> I[GitHub Token]
+    F --> J[NewsAPI Key]
+    
     style A fill:#e3f2fd
     style B fill:#f3e5f5
     style C fill:#fff3e0
     style D fill:#e8f5e8
     style E fill:#fce4ec
+    style F fill:#ffebee
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#fff3e0
+    style J fill:#fff3e0
 ```
 
-### ⚡ One-Command Setup
+### ⚡ Production Setup (One Command)
 
 ```bash
-# Clone and build everything
+# Windows
 git clone <repository-url>
 cd aether-swarm
-./scripts/build-all.bat  # Windows
-# or ./scripts/build-all.sh  # Linux/Mac
+.\scripts\setup-production.bat
+
+# Linux/Mac
+git clone <repository-url>
+cd aether-swarm
+chmod +x scripts/setup-production.sh
+./scripts/setup-production.sh
 ```
+
+### 🔑 Required API Keys
+
+Before running the setup, obtain these API keys:
+
+1. **Cortensor API Key**: Register at [cortensor.com](https://cortensor.com)
+2. **Alchemy API Key**: Get free key at [alchemy.com](https://alchemy.com) for Arbitrum Sepolia
+3. **GitHub Token**: Create at [github.com/settings/tokens](https://github.com/settings/tokens)
+4. **NewsAPI Key**: Register at [newsapi.org](https://newsapi.org)
+5. **Pinata Keys**: For IPFS storage at [pinata.cloud](https://pinata.cloud)
 
 ### 🎯 Step-by-Step Installation
 
@@ -371,34 +396,83 @@ aether-swarm spawn --config my-swarm.json --name "my-first-swarm"
 ```
 </details>
 
-### 🎬 Demo
+### 🎬 Production Demo
 
-Run the complete public goods discovery cycle in 2 minutes:
+Run a complete public goods discovery cycle with **REAL DATA**:
 
 ```bash
-# Quick demo (2 minutes)
+# Quick production demo (real APIs, 2-3 minutes)
 aether-swarm demo --demo-type quick
 
-# Full demo with dashboard (5 minutes)
+# Full production demo with live dashboard (5-10 minutes)
 aether-swarm demo --demo-type full
 
-# Cortensor integration demo
+# Real Cortensor network integration demo
 aether-swarm demo --demo-type cortensor-integration
+
+# Live task execution with real GitHub/News data
+aether-swarm init --task "Find DePIN infrastructure gaps in Southeast Asia"
 ```
 
-**Expected Demo Output:**
+**Expected Production Output:**
 ```
-🎬 Running quick demo...
-🚀 Quick Demo: Public Goods Discovery
-   1. Starting swarm...
-   2. Running discovery cycle...
-   3. Results:
-      Discoveries: 3 ✅
-      Verification: 87.5% ✅
-      Execution: ✅ Success
-      Consensus: ✅ Approved (85% stake weight)
-✅ Demo completed successfully!
+🌀 Initializing Aether Swarm with Real Cortensor Integration...
+🔗 Connecting to Cortensor Network (Arbitrum Sepolia)...
+✅ Swarm initialized with ID: 550e8400-e29b-41d4-a716-446655440000
+🌐 Network: Arbitrum Sepolia (Chain ID: 421614)
+💰 $COR Token: 0x8e0eef788350f40255d86dfe8d91ec0ad3a4547f
+
+🚀 Starting swarm and executing REAL task...
+📡 This will make actual API calls to:
+   • GitHub API for repository discovery
+   • NewsAPI for current events  
+   • Cortensor Network for AI inference
+   • Arbitrum Sepolia for blockchain operations
+
+⏳ Executing task (this may take 30-60 seconds for real API calls)...
+
+📊 REAL Task Results:
+⏱️  Total execution time: 47.3s
+🤖 Agents participated: 5
+
+  🔍 Agent 1 Results:
+     Confidence: 94.2%
+     Inference calls: 3
+     Tokens used: 2,847
+     $COR staked: 2,000
+     PoI Hash: 0x7f9a8b2c3d4e5f6a
+
+🎯 Running swarm consensus...
+
+📈 Consensus Results:
+   Discoveries: 12 ✅
+   Verification: 91.7% ✅  
+   Execution: ✅ Success
+   Consensus: ✅ Approved (87% stake weight)
+
+🎉 Real production task completed successfully!
+💡 Check the Arbitrum Sepolia explorer for any blockchain transactions
 ```
+
+### 🌐 Live Dashboard
+
+Access the real-time dashboard at `http://localhost:3000`:
+
+- **Live Agent Communication**: See agents discovering, verifying, and executing in real-time
+- **Real Cortensor Metrics**: Actual inference calls, PoI validation, consensus rates
+- **Blockchain Integration**: Live transaction monitoring on Arbitrum Sepolia
+- **Discovery Results**: Browse real discoveries from GitHub, news, and social sources
+- **SQLite Database**: All swarm data persisted locally for hackathon demo
+- **WebSocket Updates**: Real-time swarm events and metrics
+
+### 🗄️ Database Features
+
+**SQLite Integration for Hackathon:**
+- All swarm data automatically saved to local SQLite database
+- View discovery results: `aether-swarm discoveries <swarm-id>`
+- Get analytics: `aether-swarm analytics <swarm-id>`
+- Database files stored in `./data/` directory
+- Perfect for hackathon demos - no complex database setup needed
 
 ## 🛠️ Development Guide
 

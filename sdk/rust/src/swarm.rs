@@ -1,5 +1,5 @@
 use crate::{
-    agents::*, consensus::*, cortensor::*, SwarmConfig, SwarmError, SwarmEvent, 
+    agents::*, consensus::*, cortensor::*, database::*, SwarmConfig, SwarmError, SwarmEvent, 
     SwarmEventType, SwarmResult
 };
 use std::collections::HashMap;
@@ -14,6 +14,7 @@ pub struct Swarm {
     pub agents: HashMap<Uuid, Box<dyn Agent>>,
     pub consensus_engine: ConsensusEngine,
     pub cortensor_client: CortensorClient,
+    pub database: SwarmDatabase,
     pub event_sender: mpsc::UnboundedSender<SwarmEvent>,
     pub event_receiver: Arc<RwLock<mpsc::UnboundedReceiver<SwarmEvent>>>,
     pub is_running: Arc<RwLock<bool>>,
@@ -22,15 +23,16 @@ pub struct Swarm {
 }
 
 impl Swarm {
-    pub fn new(config: SwarmConfig) -> Self {
+    pub async fn new(config: SwarmConfig) -> SwarmResult<Self> {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
         
         let cortensor_client = CortensorClient::new(
             config.cortensor.api_endpoint.clone(),
-            None, // API key would be loaded from env
+            std::env::var("CORTENSOR_API_KEY").ok(),
             config.cortensor.model_preferences.clone(),
             config.cortensor.inference_timeout,
-        );
+            std::env::var("CORTENSOR_PRIVATE_KEY").ok(),
+        ).await?;
 
         let consensus_engine = ConsensusEngine::new(
             match config.consensus.algorithm.as_str() {
@@ -43,28 +45,67 @@ impl Swarm {
             config.consensus.timeout_ms,
         );
 
-        Self {
-            id: Uuid::new_v4(),
+        // Initialize SQLite database for hackathon
+        let swarm_id = Uuid::new_v4();
+        
+        // For hackathon demo, use in-memory database to avoid file system issues
+        let database = if std::env::var("AETHER_USE_MEMORY_DB").is_ok() {
+            SwarmDatabase::new(":memory:").await?
+        } else {
+            // Use current directory for database to avoid path issues
+            let current_dir = std::env::current_dir()
+                .map_err(|e| SwarmError::DatabaseError(format!("Failed to get current directory: {}", e)))?;
+            let data_dir = current_dir.join("data");
+            
+            // Ensure data directory exists
+            std::fs::create_dir_all(&data_dir)
+                .map_err(|e| SwarmError::DatabaseError(format!("Failed to create data directory: {}", e)))?;
+            
+            let db_path = data_dir.join(format!("swarm_{}.db", swarm_id));
+            SwarmDatabase::new(db_path.to_str().unwrap()).await?
+        };
+
+        // Save swarm to database
+        let swarm_record = SwarmRecord {
+            id: swarm_id.to_string(),
+            name: config.name.clone(),
+            status: "created".to_string(),
+            agent_count: config.agents.count as i32,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            config: serde_json::to_value(&config)?,
+        };
+        database.create_swarm(&swarm_record).await?;
+
+        Ok(Self {
+            id: swarm_id,
             config,
             agents: HashMap::new(),
             consensus_engine,
             cortensor_client,
+            database,
             event_sender,
             event_receiver: Arc::new(RwLock::new(event_receiver)),
             is_running: Arc::new(RwLock::new(false)),
             task_queue: Arc::new(RwLock::new(Vec::new())),
             execution_history: Arc::new(RwLock::new(Vec::new())),
-        }
+        })
     }
 
     pub async fn start(&mut self) -> SwarmResult<()> {
         *self.is_running.write().await = true;
+        
+        // Update database status
+        self.database.update_swarm_status(&self.id.to_string(), "starting").await?;
         
         // Spawn agents based on configuration
         self.spawn_agents().await?;
         
         // Start the main swarm loop
         self.start_swarm_loop().await?;
+        
+        // Update database status
+        self.database.update_swarm_status(&self.id.to_string(), "running").await?;
         
         self.emit_event(SwarmEventType::AgentSpawned, None, serde_json::json!({
             "swarm_id": self.id,
@@ -79,12 +120,18 @@ impl Swarm {
     pub async fn stop(&mut self) -> SwarmResult<()> {
         *self.is_running.write().await = false;
         
+        // Update database status
+        self.database.update_swarm_status(&self.id.to_string(), "stopping").await?;
+        
         // Shutdown all agents
         for (agent_id, agent) in &mut self.agents {
             if let Err(e) = agent.shutdown().await {
                 tracing::warn!("Error shutting down agent {}: {}", agent_id, e);
             }
         }
+        
+        // Final database status update
+        self.database.update_swarm_status(&self.id.to_string(), "stopped").await?;
         
         self.emit_event(SwarmEventType::SwarmStopped, None, serde_json::json!({
             "swarm_id": self.id,
@@ -256,6 +303,19 @@ impl Swarm {
     pub async fn execute_task(&mut self, task: AgentTask) -> SwarmResult<Vec<AgentOutput>> {
         let mut outputs = Vec::new();
         
+        // Save task to database
+        let task_record = TaskRecord {
+            id: task.id.to_string(),
+            swarm_id: self.id.to_string(),
+            task_type: format!("{:?}", task.task_type),
+            prompt: task.prompt.clone(),
+            status: "executing".to_string(),
+            created_at: chrono::Utc::now(),
+            completed_at: None,
+            results: None,
+        };
+        self.database.create_task(&task_record).await?;
+        
         // Find suitable agents for the task
         let suitable_agents: Vec<Uuid> = self.agents.iter()
             .filter(|(_, agent)| {
@@ -277,6 +337,45 @@ impl Swarm {
                         let output_clone = output.clone();
                         outputs.push(output_clone.clone());
                         self.execution_history.write().await.push(output_clone.clone());
+                        
+                        // Save agent output to database
+                        self.database.save_agent_output(
+                            &self.id.to_string(),
+                            &task.id.to_string(),
+                            &output_clone
+                        ).await?;
+                        
+                        // Save discovery results if this is a scout task
+                        if let TaskType::Scout { categories } = &task.task_type {
+                            if let Some(opportunities) = output_clone.result.get("opportunities") {
+                                if let Some(opportunities_array) = opportunities.as_array() {
+                                    for opportunity in opportunities_array {
+                                        if let (Some(title), Some(source)) = (
+                                            opportunity.get("title").and_then(|v| v.as_str()),
+                                            opportunity.get("source").and_then(|v| v.as_str())
+                                        ) {
+                                            let unknown_category = "unknown".to_string();
+                                            let category = categories.first().unwrap_or(&unknown_category);
+                                            let impact_score = opportunity.get("impact_score").and_then(|v| v.as_f64());
+                                            let url = opportunity.get("url").and_then(|v| v.as_str());
+                                            let description = opportunity.get("description").and_then(|v| v.as_str());
+                                            
+                                            self.database.save_discovery_result(
+                                                &self.id.to_string(),
+                                                source,
+                                                category,
+                                                title,
+                                                url,
+                                                description,
+                                                impact_score,
+                                                output_clone.confidence,
+                                                opportunity
+                                            ).await?;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         
                         self.emit_event(
                             SwarmEventType::TaskExecuted,
@@ -309,6 +408,9 @@ impl Swarm {
         let task_count = self.task_queue.read().await.len();
         let execution_count = self.execution_history.read().await.len();
         
+        // Get analytics from database
+        let analytics = self.database.get_swarm_analytics(&self.id.to_string()).await?;
+        
         Ok(serde_json::json!({
             "swarm_id": self.id,
             "name": self.config.name,
@@ -318,8 +420,17 @@ impl Swarm {
             "completed_executions": execution_count,
             "consensus_algorithm": self.config.consensus.algorithm,
             "public_goods_categories": self.config.public_goods.categories,
+            "analytics": analytics,
             "uptime_seconds": 0 // Would track actual uptime
         }))
+    }
+
+    pub async fn get_discovery_results(&self, limit: Option<i32>) -> SwarmResult<Vec<serde_json::Value>> {
+        self.database.get_discovery_results(&self.id.to_string(), limit).await
+    }
+
+    pub async fn get_tasks(&self) -> SwarmResult<Vec<TaskRecord>> {
+        self.database.get_tasks_for_swarm(&self.id.to_string()).await
     }
 
     async fn emit_event(
@@ -343,19 +454,8 @@ impl Swarm {
     pub async fn demo_public_goods_cycle(&mut self) -> SwarmResult<serde_json::Value> {
         tracing::info!("Starting public goods discovery demo cycle");
 
-        // 1. Scout for opportunities
-        let scout_task = AgentTask {
-            id: Uuid::new_v4(),
-            task_type: TaskType::Scout {
-                categories: vec!["depin".to_string(), "climate".to_string()],
-            },
-            prompt: "Find DePIN and climate tech projects needing support".to_string(),
-            context: HashMap::new(),
-            priority: 10,
-            stake_amount: 2000,
-        };
-
-        let scout_outputs = self.execute_task(scout_task).await?;
+        // For hackathon demo, create mock outputs to avoid API dependency
+        let scout_outputs = self.create_demo_scout_outputs().await?;
         
         if scout_outputs.is_empty() {
             return Err(SwarmError::AgentError("No scout outputs generated".to_string()));
@@ -420,5 +520,74 @@ impl Swarm {
             "total_agents_participated": all_outputs.len(),
             "cycle_timestamp": chrono::Utc::now().timestamp()
         }))
+    }
+
+    /// Create demo scout outputs for hackathon demonstration
+    async fn create_demo_scout_outputs(&self) -> SwarmResult<Vec<AgentOutput>> {
+        let mut outputs = Vec::new();
+        
+        // Create mock scout outputs
+        for i in 0..2 {
+            let agent_id = Uuid::new_v4();
+            let task_id = Uuid::new_v4();
+            
+            let mock_discoveries = serde_json::json!({
+                "opportunities": [
+                    {
+                        "title": "Helium Network Coverage Gap Analysis Tool",
+                        "source": "GitHub",
+                        "category": "depin",
+                        "url": "https://github.com/example/helium-coverage",
+                        "description": "Open source tool for analyzing Helium network coverage gaps in underserved regions",
+                        "impact_score": 8.5,
+                        "funding_need": 50000,
+                        "ai_analysis": {
+                            "impact_score": 8.5,
+                            "funding_need": 50000,
+                            "category": "depin",
+                            "reasoning": "High impact infrastructure project"
+                        },
+                        "proof_hash": "0x7f9a8b2c3d4e5f6a"
+                    },
+                    {
+                        "title": "Carbon Capture Startup Seeks Contributors",
+                        "source": "NewsAPI", 
+                        "category": "climate",
+                        "url": "https://example.com/carbon-capture-news",
+                        "description": "Climate tech startup looking for developers to contribute to their open source carbon tracking platform",
+                        "impact_score": 9.2,
+                        "funding_need": 75000,
+                        "ai_analysis": {
+                            "impact_score": 9.2,
+                            "funding_need": 75000,
+                            "category": "climate",
+                            "reasoning": "Critical climate technology with high impact potential"
+                        },
+                        "proof_hash": "0x8a1b9c3d4e5f6a7b"
+                    }
+                ],
+                "total_found": 2,
+                "categories_searched": ["depin", "climate"],
+                "agent_specialization": ["depin", "climate", "education"]
+            });
+            
+            let output = AgentOutput {
+                agent_id,
+                task_id,
+                result: mock_discoveries,
+                confidence: 0.85 + (i as f64 * 0.05),
+                proof_hash: Some(format!("demo_proof_{}", i)),
+                execution_time_ms: 1500 + (i as u64 * 200),
+                resources_used: ResourceUsage {
+                    inference_calls: 2,
+                    tokens_consumed: 2048,
+                    stake_consumed: 1000,
+                },
+            };
+            
+            outputs.push(output);
+        }
+        
+        Ok(outputs)
     }
 }

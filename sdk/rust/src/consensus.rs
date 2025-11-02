@@ -1,4 +1,4 @@
-use crate::{AgentOutput, SwarmError, SwarmResult};
+use crate::{AgentOutput, SwarmResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;

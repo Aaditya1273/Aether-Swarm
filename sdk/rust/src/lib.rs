@@ -1,17 +1,17 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tokio::sync::mpsc;
 use uuid::Uuid;
 
 pub mod agents;
 pub mod cortensor;
 pub mod consensus;
 pub mod swarm;
+pub mod database;
 
 pub use agents::*;
 pub use cortensor::*;
 pub use consensus::*;
 pub use swarm::*;
+pub use database::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SwarmConfig {
@@ -97,6 +97,8 @@ pub enum SwarmError {
     NetworkError(#[from] reqwest::Error),
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
+    #[error("Database error: {0}")]
+    DatabaseError(String),
 }
 
 // WASM bindings for web integration

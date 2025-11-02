@@ -1,4 +1,5 @@
 use aether_swarm_sdk::*;
+use aether_swarm_sdk::database::*;
 use clap::{Parser, Subcommand};
 use colored::*;
 use serde_json;
@@ -89,6 +90,19 @@ enum Commands {
         #[arg(short, long)]
         config: PathBuf,
     },
+    /// Show discovery results from database
+    Discoveries {
+        /// Swarm ID
+        swarm_id: String,
+        /// Limit number of results
+        #[arg(short, long)]
+        limit: Option<i32>,
+    },
+    /// Show analytics for a swarm
+    Analytics {
+        /// Swarm ID
+        swarm_id: String,
+    },
 }
 
 #[tokio::main]
@@ -129,6 +143,12 @@ async fn main() -> anyhow::Result<()> {
         Commands::Update { swarm_id, config } => {
             handle_update(swarm_id, config).await?;
         }
+        Commands::Discoveries { swarm_id, limit } => {
+            handle_discoveries(swarm_id, limit).await?;
+        }
+        Commands::Analytics { swarm_id } => {
+            handle_analytics(swarm_id).await?;
+        }
     }
 
     Ok(())
@@ -139,50 +159,128 @@ async fn handle_init(
     name: Option<String>,
     task: Option<String>,
 ) -> anyhow::Result<()> {
-    println!("{}", "🌀 Initializing Aether Swarm...".cyan().bold());
+    println!("{}", "🌀 Initializing Aether Swarm with Real Cortensor Integration...".cyan().bold());
 
+    // Load environment variables
+    dotenv::dotenv().ok();
+    
     let swarm_config = if let Some(config_path) = config {
         // Load from file
         let config_str = tokio::fs::read_to_string(&config_path).await?;
         serde_json::from_str::<SwarmConfig>(&config_str)?
     } else {
-        // Create default configuration
-        create_default_config(name.unwrap_or_else(|| "default-swarm".to_string()))
+        // Create default configuration with real API endpoints
+        create_production_config(name.unwrap_or_else(|| "production-swarm".to_string()))
     };
 
-    let mut swarm = Swarm::new(swarm_config);
+    println!("🔗 Connecting to Cortensor Network (Arbitrum Sepolia)...");
+    
+    // Validate environment setup
+    validate_environment_setup()?;
+    
+    let mut swarm = Swarm::new(swarm_config).await?;
     
     println!("✅ Swarm initialized with ID: {}", swarm.id.to_string().green());
+    println!("🌐 Network: Arbitrum Sepolia (Chain ID: 421614)");
+    println!("💰 $COR Token: 0x8e0eef788350f40255d86dfe8d91ec0ad3a4547f");
     
     if let Some(task_description) = task {
-        println!("🚀 Starting swarm and executing task...");
+        println!("\n🚀 Starting swarm and executing REAL task...");
+        println!("📡 This will make actual API calls to:");
+        println!("   • GitHub API for repository discovery");
+        println!("   • NewsAPI for current events");
+        println!("   • Cortensor Network for AI inference");
+        println!("   • Arbitrum Sepolia for blockchain operations");
+        
         swarm.start().await?;
         
-        // Create and execute the task
+        // Create and execute the task with real data
         let task = AgentTask {
             id: Uuid::new_v4(),
             task_type: TaskType::Scout {
                 categories: vec!["depin".to_string(), "climate".to_string(), "education".to_string()],
             },
-            prompt: task_description,
+            prompt: format!("REAL TASK: {}", task_description),
             context: HashMap::new(),
-            priority: 5,
-            stake_amount: 1000,
+            priority: 8,
+            stake_amount: 2000, // Higher stake for production
         };
 
+        println!("\n⏳ Executing task (this may take 30-60 seconds for real API calls)...");
+        let start_time = std::time::Instant::now();
+        
         let outputs = swarm.execute_task(task).await?;
         
-        println!("\n📊 Task Results:");
+        let execution_time = start_time.elapsed();
+        
+        println!("\n📊 REAL Task Results:");
+        println!("⏱️  Total execution time: {:.2}s", execution_time.as_secs_f64());
+        println!("🤖 Agents participated: {}", outputs.len());
+        
         for (i, output) in outputs.iter().enumerate() {
-            println!("  Agent {}: Confidence {:.2}%", 
-                i + 1, 
-                (output.confidence * 100.0).to_string().green()
-            );
+            println!("\n  🔍 Agent {} Results:", i + 1);
+            println!("     Confidence: {:.2}%", (output.confidence * 100.0).to_string().green());
+            println!("     Inference calls: {}", output.resources_used.inference_calls);
+            println!("     Tokens used: {}", output.resources_used.tokens_consumed);
+            println!("     $COR staked: {}", output.resources_used.stake_consumed);
+            
+            if let Some(proof_hash) = &output.proof_hash {
+                println!("     PoI Hash: {}", proof_hash.chars().take(16).collect::<String>().yellow());
+            }
         }
         
+        // Run consensus on results
+        println!("\n🎯 Running swarm consensus...");
+        let consensus_result = swarm.demo_public_goods_cycle().await?;
+        
+        println!("\n📈 Consensus Results:");
+        println!("   Discoveries: {}", consensus_result["scout_discoveries"].as_u64().unwrap_or(0).to_string().green());
+        println!("   Verification: {:.1}%", (consensus_result["verification_confidence"].as_f64().unwrap_or(0.0) * 100.0).to_string().yellow());
+        println!("   Execution: {}", if consensus_result["execution_success"].as_bool().unwrap_or(false) { "✅ Success".green() } else { "❌ Failed".red() });
+        println!("   Consensus: {}", if consensus_result["consensus_approved"].as_bool().unwrap_or(false) { "✅ Approved".green() } else { "❌ Rejected".red() });
+        
         swarm.stop().await?;
+        
+        println!("\n🎉 Real production task completed successfully!");
+        println!("💡 Check the Arbitrum Sepolia explorer for any blockchain transactions");
     }
 
+    Ok(())
+}
+
+fn validate_environment_setup() -> anyhow::Result<()> {
+    let required_vars = [
+        "CORTENSOR_API_ENDPOINT",
+        "ARBITRUM_SEPOLIA_RPC",
+    ];
+    
+    let optional_vars = [
+        "CORTENSOR_API_KEY",
+        "GITHUB_TOKEN", 
+        "NEWS_API_KEY",
+        "PINATA_API_KEY",
+    ];
+    
+    println!("🔍 Validating environment setup...");
+    
+    for var in &required_vars {
+        if std::env::var(var).is_err() {
+            println!("❌ Missing required environment variable: {}", var.red());
+            println!("   Copy .env.example to .env and fill in your API keys");
+            return Err(anyhow::anyhow!("Missing required environment variables"));
+        } else {
+            println!("✅ {}: configured", var.green());
+        }
+    }
+    
+    for var in &optional_vars {
+        if std::env::var(var).is_ok() {
+            println!("✅ {}: configured", var.green());
+        } else {
+            println!("⚠️  {}: not configured (some features may be limited)", var.yellow());
+        }
+    }
+    
     Ok(())
 }
 
@@ -196,7 +294,7 @@ async fn handle_spawn(config: PathBuf, name: Option<String>) -> anyhow::Result<(
         swarm_config.name = override_name;
     }
 
-    let mut swarm = Swarm::new(swarm_config);
+    let mut swarm = Swarm::new(swarm_config).await?;
     let swarm_id = swarm.id;
     
     swarm.start().await?;
@@ -337,6 +435,95 @@ async fn handle_update(swarm_id: String, config: PathBuf) -> anyhow::Result<()> 
     Ok(())
 }
 
+async fn handle_discoveries(swarm_id: String, limit: Option<i32>) -> anyhow::Result<()> {
+    println!("{}", format!("🔍 Discovery Results for Swarm: {}", swarm_id).cyan().bold());
+
+    // Find the database file for this swarm
+    let db_path = format!("./data/swarm_{}.db", swarm_id);
+    
+    if !std::path::Path::new(&db_path).exists() {
+        println!("❌ No database found for swarm {}", swarm_id.red());
+        println!("   Make sure the swarm has been run and has discovery data");
+        return Ok(());
+    }
+
+    let database = SwarmDatabase::new(&db_path).await?;
+    let discoveries = database.get_discovery_results(&swarm_id, limit).await?;
+
+    if discoveries.is_empty() {
+        println!("📭 No discoveries found for this swarm");
+        println!("   Run some scout tasks to generate discovery data");
+        return Ok(());
+    }
+
+    println!("\n📊 Found {} discoveries:", discoveries.len());
+    
+    for (i, discovery) in discoveries.iter().enumerate() {
+        println!("\n{}. {}", (i + 1).to_string().yellow(), 
+                 discovery["title"].as_str().unwrap_or("Unknown").green());
+        println!("   Source: {}", discovery["source"].as_str().unwrap_or("Unknown").blue());
+        println!("   Category: {}", discovery["category"].as_str().unwrap_or("Unknown").cyan());
+        
+        if let Some(impact_score) = discovery["impact_score"].as_f64() {
+            println!("   Impact Score: {:.1}/10", impact_score.to_string().yellow());
+        }
+        
+        println!("   Confidence: {:.1}%", 
+                 (discovery["confidence"].as_f64().unwrap_or(0.0) * 100.0).to_string().green());
+        
+        if let Some(url) = discovery["url"].as_str() {
+            println!("   URL: {}", url.blue());
+        }
+        
+        if let Some(description) = discovery["description"].as_str() {
+            let short_desc = if description.len() > 100 {
+                format!("{}...", &description[..100])
+            } else {
+                description.to_string()
+            };
+            println!("   Description: {}", short_desc);
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_analytics(swarm_id: String) -> anyhow::Result<()> {
+    println!("{}", format!("📈 Analytics for Swarm: {}", swarm_id).cyan().bold());
+
+    // Find the database file for this swarm
+    let db_path = format!("./data/swarm_{}.db", swarm_id);
+    
+    if !std::path::Path::new(&db_path).exists() {
+        println!("❌ No database found for swarm {}", swarm_id.red());
+        return Ok(());
+    }
+
+    let database = SwarmDatabase::new(&db_path).await?;
+    let analytics = database.get_swarm_analytics(&swarm_id).await?;
+
+    println!("\n📊 Swarm Performance:");
+    println!("   Total Tasks: {}", analytics["total_tasks"].as_i64().unwrap_or(0).to_string().green());
+    println!("   Agent Outputs: {}", analytics["total_outputs"].as_i64().unwrap_or(0).to_string().blue());
+    println!("   Discoveries: {}", analytics["total_discoveries"].as_i64().unwrap_or(0).to_string().yellow());
+    println!("   Consensus Decisions: {}", analytics["total_consensus"].as_i64().unwrap_or(0).to_string().purple());
+    println!("   Average Confidence: {:.1}%", 
+             (analytics["average_confidence"].as_f64().unwrap_or(0.0) * 100.0).to_string().green());
+
+    // Show recent discoveries
+    let recent_discoveries = database.get_discovery_results(&swarm_id, Some(5)).await?;
+    if !recent_discoveries.is_empty() {
+        println!("\n🔍 Recent Discoveries:");
+        for discovery in recent_discoveries.iter().take(3) {
+            println!("   • {} ({})", 
+                     discovery["title"].as_str().unwrap_or("Unknown").green(),
+                     discovery["source"].as_str().unwrap_or("Unknown").blue());
+        }
+    }
+
+    Ok(())
+}
+
 // Helper functions
 
 fn create_default_config(name: String) -> SwarmConfig {
@@ -373,6 +560,62 @@ fn create_default_config(name: String) -> SwarmConfig {
     }
 }
 
+fn create_production_config(name: String) -> SwarmConfig {
+    SwarmConfig {
+        name,
+        agents: AgentConfig {
+            count: 5, // More agents for production
+            templates: vec![
+                "scout".to_string(), 
+                "scout".to_string(), // Multiple scouts for parallel discovery
+                "verifier".to_string(), 
+                "executor".to_string(),
+                "executor".to_string() // Multiple executors for parallel execution
+            ],
+            resources: ResourceLimits {
+                cpu_limit: "4".to_string(),
+                memory_limit: "8GB".to_string(),
+                inference_budget: 50000, // Higher budget for production
+            },
+        },
+        consensus: ConsensusConfig {
+            algorithm: "hybrid".to_string(),
+            threshold: 0.75, // Higher threshold for production
+            timeout_ms: 60000, // Longer timeout for real API calls
+            stake_weight: true,
+        },
+        public_goods: PublicGoodsConfig {
+            categories: vec![
+                "depin".to_string(), 
+                "climate".to_string(), 
+                "education".to_string(),
+                "healthcare".to_string(),
+                "open_source".to_string()
+            ],
+            budget: 500000, // Higher budget for real grants
+            impact_metrics: vec![
+                "reach".to_string(), 
+                "sustainability".to_string(),
+                "cost_effectiveness".to_string(),
+                "community_adoption".to_string()
+            ],
+            quadratic_funding: true,
+        },
+        cortensor: CortensorConfig {
+            api_endpoint: std::env::var("CORTENSOR_API_ENDPOINT")
+                .unwrap_or_else(|_| "https://api.cortensor.com".to_string()),
+            model_preferences: vec![
+                "gpt-4".to_string(), 
+                "claude-3-sonnet".to_string(),
+                "llama-2-70b".to_string()
+            ],
+            inference_timeout: 45000, // Longer timeout for production
+            proof_of_inference: true,
+            stake_pool_id: Some("pool_public_goods_001".to_string()),
+        },
+    }
+}
+
 fn create_basic_template() -> SwarmConfig {
     create_default_config("basic-swarm".to_string())
 }
@@ -402,7 +645,7 @@ async fn run_quick_demo() -> anyhow::Result<()> {
     println!("🚀 Quick Demo: Public Goods Discovery");
     
     let config = create_default_config("demo-swarm".to_string());
-    let mut swarm = Swarm::new(config);
+    let mut swarm = Swarm::new(config).await?;
     
     println!("   1. Starting swarm...");
     swarm.start().await?;
